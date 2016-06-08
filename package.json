@@ -17,9 +17,7 @@
   "scripts": {
     "start": "PORT=$OPENSHIFT_NODEJS_PORT BIND_ADDRESS=$OPENSHIFT_NODEJS_IP HUBOT_SLACK_TOKEN=xoxb-49039017607-XzaO9mgbKxuh5sHd4bkapIFK bin/hubot -a slack"
   },
-  "//": {
-    "engines": {
-      "node": "0.10.x"
-    }
+  "engines": {
+    "node": "0.10.x"
   }
 }
