@@ -2,10 +2,11 @@
 #   ibsbot - dict bot for the Indian and Buddhist Studies
 #
 # Commands:
-#   mw <word> - Monier-Williams Sanskrit English Dictionary
-#
-# Notes:
-#   --
+#   :pginit - reset postgres (UNCANCELLABLE!!)
+#   :pgany <query> - do query with some results
+#   :pgnone <query> -do query without results
+#   :pgone <query> - do query with a result (e.g. insert?)
+#   :mw <word> - Monier-Williams Sanskrit English Dictionary
 
 #  postgresql
 pg = require 'pg'
@@ -66,6 +67,6 @@ module.exports = (robot) ->
       msg.send err.message || err
 
 # dictionaries
-  robot.hear /^mw\s+(.*)/i, (msg) ->
+  robot.hear /^:mw\s+(.*)/i, (msg) ->
     msg.send "http://www.sanskrit-lexicon.uni-koeln.de/cgi-bin/monier/monierv1a.pl?key=#{msg.match[1]}&filter=SktDevaUnicode&noLit=off&transLit=HK&scandir=../..MWScan/MWScanpng&filterdir=../../docs/filter"
 
