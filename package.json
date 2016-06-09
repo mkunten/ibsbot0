@@ -5,6 +5,7 @@
   "author": "mkunten <mkunten@gmail.com>",
   "description": "A simple helpful robot for your Company",
   "dependencies": {
+    "bluebird": "^3.4.0",
     "hubot": "^2.19.0",
     "hubot-diagnostics": "0.0.1",
     "hubot-google-images": "^0.2.6",
@@ -13,7 +14,8 @@
     "hubot-maps": "0.0.2",
     "hubot-scripts": "^2.17.2",
     "hubot-slack": "^3.4.2",
-    "pg": "^5.0.0"
+    "pg": "^5.0.0",
+    "pg-promise": "git://github.com/vitaly-t/pg-promise"
   },
   "scripts": {
     "start": "PORT=$OPENSHIFT_NODEJS_PORT BIND_ADDRESS=$OPENSHIFT_NODEJS_IP HUBOT_SLACK_TOKEN=xoxb-49039017607-XzaO9mgbKxuh5sHd4bkapIFK bin/hubot -a slack"
