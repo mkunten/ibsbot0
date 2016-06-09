@@ -29,6 +29,17 @@ module.exports = (robot) ->
     .catch (err) ->
       msg.send err.message || err
 
+  robot.hear /^:pgdt$/i, (msg) ->
+    db.any('SELECT pg_statio_user_tables.relname
+    FROM pg_catalog.pg_class,pg_catalog.pg_statio_user_tables
+    WHERE relkind = \'r\' AND pg_catalog.pg_statio_user_tables.relid = pg_catalog.pg_class.relfilenode')
+    .then (data) ->
+      msg.send 'tables: ' + (data.map (n) ->
+        n.relname
+      .join ', ')
+    .catch (err) ->
+      msg.send err.message || err
+
   robot.hear /^:pgany (.*)$/i, (msg) ->
     query = msg.match[1]
     db.any(query)
