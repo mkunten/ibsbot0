@@ -6,6 +6,8 @@
 #   :pgany <query> - do query with some results
 #   :pgnone <query> -do query without results
 #   :pgone <query> - do query with a result (e.g. insert?)
+#   :pg \dt - SHOW TABLES
+#   :pg \dt <table> - SHOW COLUMNS
 #   :mw <word> - Monier-Williams Sanskrit English Dictionary
 
 #  postgresql
@@ -16,6 +18,39 @@ pgp = require('pg-promise')({
 })
 conString = "#{process.env.OPENSHIFT_POSTGRESQL_DB_URL}/ibsbot0"
 db = pgp(conString)
+if 'undefined' == typeof String.prototype.repeat
+  String.prototype.repeat = (len) ->
+    new Array(len + 1).join this
+
+# formatter: array to table
+formatter = (arr) ->
+  res = ''
+  if arr.length > 0
+    lens = {}
+    spacer = {}
+    keys = Object.keys arr[0]
+    keys.forEach (key) ->
+      lens[key] = key.length
+    arr.forEach (n) ->
+      keys.forEach (key) ->
+        if n[key] == null
+          n[key] = '_null_'
+        else if n[key].toString
+          n[key] = n[key].toString()
+        lens[key] = Math.max lens[key], n[key].length
+    for key of lens
+      spacer[key] = ' '.repeat lens[key]
+    res += (keys.map (key) ->
+      (key + spacer[key]).slice( 0, lens[key] + 1)
+    .join(' | '))
+    res += "\n" + res.replace /[^|]/g, '-'
+    res += "\n" + (arr.map (n) ->
+      (keys.map (key) ->
+        (n[key] + spacer[key]).slice( 0, lens[key] + 1)
+      .join(' | '))
+    .join("\n"))
+    res = "```\n#{res}\n```"
+  res
 
 module.exports = (robot) ->
 # postgresql
@@ -30,14 +65,17 @@ module.exports = (robot) ->
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^:pgdt$/i, (msg) ->
-    db.any('SELECT pg_statio_user_tables.relname
-    FROM pg_catalog.pg_class,pg_catalog.pg_statio_user_tables
-    WHERE relkind = \'r\' AND pg_catalog.pg_statio_user_tables.relid = pg_catalog.pg_class.relfilenode')
+  robot.hear /^:pg \\dt$/i, (msg) ->
+    db.any('SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\'')
     .then (data) ->
-      msg.send 'tables: ' + (data.map (n) ->
-        n.relname
-      .join ', ')
+      msg.send formatter data
+    .catch (err) ->
+      msg.send err.message || err
+
+  robot.hear /^:pg \\d (.+)$/i, (msg) ->
+    db.any('SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name = $1', msg.match[1])
+    .then (data) ->
+      msg.send formatter data
     .catch (err) ->
       msg.send err.message || err
 
@@ -46,7 +84,7 @@ module.exports = (robot) ->
     db.any(query)
     .then (data) ->
       msg.send "result: #{data.length}"
-      msg.send JSON.stringify data if data.length
+      msg.send formatter data if data.length
     .catch (err) ->
       msg.send err.message || err
 
@@ -62,7 +100,7 @@ module.exports = (robot) ->
     query = msg.match[1]
     db.one(query)
     .then (data) ->
-      msg.send JSON.stringify data
+      msg.send formatter [data]
     .catch (err) ->
       msg.send err.message || err
 
