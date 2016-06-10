@@ -10,6 +10,8 @@
 #   :pg \dt <table> - SHOW COLUMNS
 #   :mw <word> - Monier-Williams Sanskrit English Dictionary
 
+botName = 'ibsbot'
+
 #  postgresql
 pg = require 'pg'
 promise = require 'bluebird'
@@ -55,7 +57,7 @@ formatter = (arr) ->
 
 module.exports = (robot) ->
 # postgresql
-  robot.hear /^:pginit$/i, (msg) ->
+  robot.hear /^(ibsbot )?:pginit$/i, (msg) ->
     db.tx (t) ->
       t.batch [
         t.any 'DROP TABLE IF EXISTS test'
@@ -66,22 +68,22 @@ module.exports = (robot) ->
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^:pg \\dt$/i, (msg) ->
+  robot.hear /^(ibsbot )?:pg \\dt$/i, (msg) ->
     db.any('SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\'')
     .then (data) ->
       msg.send formatter data
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^:pg \\d (.+)$/i, (msg) ->
-    db.any('SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name = $1', msg.match[1])
+  robot.hear /^(ibsbot )?:pg \\d (.+)$/i, (msg) ->
+    db.any('SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name = $1', msg.match[2])
     .then (data) ->
       msg.send formatter data
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^:pgany (.*)$/i, (msg) ->
-    query = msg.match[1]
+  robot.hear /^(ibsbot )?:pgany (.*)$/i, (msg) ->
+    query = msg.match[2]
     db.any(query)
     .then (data) ->
       msg.send "result: #{data.length}"
@@ -89,16 +91,16 @@ module.exports = (robot) ->
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^:pgnone (.*)$/i, (msg) ->
-    query = msg.match[1]
+  robot.hear /^(ibsbot )?:pgnone (.*)$/i, (msg) ->
+    query = msg.match[2]
     db.any(query)
     .then () ->
       msg.send "done" 
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^:pgone (.*)$/i, (msg) ->
-    query = msg.match[1]
+  robot.hear /^(ibsbot )?:pgone (.*)$/i, (msg) ->
+    query = msg.match[2]
     db.one(query)
     .then (data) ->
       msg.send formatter [data]
@@ -106,8 +108,8 @@ module.exports = (robot) ->
       msg.send err.message || err
 
 # dictionaries
-  robot.hear /^:mw\s+(.*)/i, (msg) ->
-    query = ".*\\|#{msg.match[1]}\\|.*"
+  robot.hear /^(ibsbot )?:mw\s+(.*)/i, (msg) ->
+    query = ".*\\|#{msg.match[2]}\\|.*"
     db.one('SELECT count(id) FROM table_dict_sa_en_mw WHERE key ~ $1', query)
     .then (data) ->
       cnt = data.cnt
