@@ -18,6 +18,7 @@ pgp = require('pg-promise')({
 })
 conString = "#{process.env.OPENSHIFT_POSTGRESQL_DB_URL}/ibsbot0"
 db = pgp(conString)
+
 if 'undefined' == typeof String.prototype.repeat
   String.prototype.repeat = (len) ->
     new Array(len + 1).join this
@@ -106,5 +107,19 @@ module.exports = (robot) ->
 
 # dictionaries
   robot.hear /^:mw\s+(.*)/i, (msg) ->
-    msg.send "http://www.sanskrit-lexicon.uni-koeln.de/cgi-bin/monier/monierv1a.pl?key=#{msg.match[1]}&filter=SktDevaUnicode&noLit=off&transLit=HK&scandir=../..MWScan/MWScanpng&filterdir=../../docs/filter"
+    query = ".*\\|#{msg.match[1]}\\|.*"
+    db.one('SELECT count(id) FROM table_dict_sa_en_mw WHERE key ~ $1', query)
+    .then (data) ->
+      cnt = data.cnt
+      msg.send "hit: #{data.count}"
+      db.any('SELECT word, description FROM table_dict_sa_en_mw WHERE key ~ $1 ORDER BY id LIMIT 2', query)
+    .then (data) ->
+      res = data.map (n) ->
+        "#{n.word}\n#{n.description}\n"
+      if res.length > 0
+        res = "```\n#{res.join('')}\n```"
+        msg.send res
+    .catch (err) ->
+      msg.send err.message || err
+    # msg.send "http://www.sanskrit-lexicon.uni-koeln.de/cgi-bin/monier/monierv1a.pl?key=#{msg.match[1]}&filter=SktDevaUnicode&noLit=off&transLit=HK&scandir=../..MWScan/MWScanpng&filterdir=../../docs/filter"
 
