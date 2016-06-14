@@ -12,6 +12,8 @@
 
 botName = 'ibsbot'
 
+# cron
+cron = require('cron') .CronJob
 #  postgresql
 pg = require 'pg'
 promise = require 'bluebird'
@@ -56,6 +58,11 @@ formatter = (arr) ->
   res
 
 module.exports = (robot) ->
+# cron
+  new cron '0 */2 * * *', () ->
+    robot.send { room: '#general' }, 'ibsbot time'
+  , null, true, 'Asia/Tokyo'
+
 # postgresql
   robot.hear /^(ibsbot )?:pginit$/i, (msg) ->
     db.tx (t) ->
