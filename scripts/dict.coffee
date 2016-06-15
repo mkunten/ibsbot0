@@ -60,11 +60,11 @@ formatter = (arr) ->
 module.exports = (robot) ->
 # cron
   new cron '0 */2 * * *', () ->
-    robot.send 'ibsbot time'
+    robot.send { room: '#general' }, 'ibsbot time'
   , null, true, 'Asia/Tokyo'
 
 # postgresql
-  robot.hear /^(ibsbot )?:pginit$/i, (msg) ->
+  robot.hear /^(@?ibsbot:? )?:pginit$/i, (msg) ->
     db.tx (t) ->
       t.batch [
         t.any 'DROP TABLE IF EXISTS test'
@@ -75,21 +75,21 @@ module.exports = (robot) ->
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^(ibsbot )?:pg \\dt$/i, (msg) ->
+  robot.hear /^(@?ibsbot:? )?:pg \\dt$/i, (msg) ->
     db.any('SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\'')
     .then (data) ->
       msg.send formatter data
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^(ibsbot )?:pg \\d (.+)$/i, (msg) ->
+  robot.hear /^(@?ibsbot:? )?:pg \\d (.+)$/i, (msg) ->
     db.any('SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name = $1', msg.match[2])
     .then (data) ->
       msg.send formatter data
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^(ibsbot )?:pgany (.*)$/i, (msg) ->
+  robot.hear /^(@?ibsbot:? )?:pgany (.*)$/i, (msg) ->
     query = msg.match[2]
     db.any(query)
     .then (data) ->
@@ -98,7 +98,7 @@ module.exports = (robot) ->
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^(ibsbot )?:pgnone (.*)$/i, (msg) ->
+  robot.hear /^(@?ibsbot:? )?:pgnone (.*)$/i, (msg) ->
     query = msg.match[2]
     db.any(query)
     .then () ->
@@ -106,7 +106,7 @@ module.exports = (robot) ->
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^(ibsbot )?:pgone (.*)$/i, (msg) ->
+  robot.hear /^(@?ibsbot:? )?:pgone (.*)$/i, (msg) ->
     query = msg.match[2]
     db.one(query)
     .then (data) ->
@@ -115,7 +115,7 @@ module.exports = (robot) ->
       msg.send err.message || err
 
 # dictionaries
-  robot.hear /^(ibsbot )?:mw\s+(.*)/i, (msg) ->
+  robot.hear /^(@?ibsbot:? )?:mw\s+(.*)/i, (msg) ->
     query = ".*\\|#{msg.match[2]}\\|.*"
     db.one('SELECT count(id) FROM table_dict_sa_en_mw WHERE key ~ $1', query)
     .then (data) ->
