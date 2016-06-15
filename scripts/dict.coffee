@@ -12,8 +12,6 @@
 
 botName = 'ibsbot'
 
-HubotSlack = require 'hubot-slack'
-
 # cron
 cron = require('cron') .CronJob
 #  postgresql
@@ -60,15 +58,10 @@ formatter = (arr) ->
   res
 
 module.exports = (robot) ->
-# bot listener
-  robot.listeners.push new HubotSlack.SlackBotListener robot, /./, (msg) ->
-    robot.send 'echo::' + msg.message.text
 # cron
-  new cron '* * * * *', () ->
+  new cron '0 */4 * * *', () ->
     robot.send { room: '#general' }, 'ping'
   , null, true, 'Asia/Tokyo'
-  robot.hear /./, (msg) ->
-    msg.send msg.message.text
 
 # postgresql
   robot.hear /^(@?ibsbot:? )?:pginit$/i, (msg) ->
