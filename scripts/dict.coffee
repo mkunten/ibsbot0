@@ -132,3 +132,11 @@ module.exports = (robot) ->
       msg.send err.message || err
     # msg.send "http://www.sanskrit-lexicon.uni-koeln.de/cgi-bin/monier/monierv1a.pl?key=#{msg.match[1]}&filter=SktDevaUnicode&noLit=off&transLit=HK&scandir=../..MWScan/MWScanpng&filterdir=../../docs/filter"
 
+# router
+  robot.router.get '/data/tables', (req, res) ->
+    res.type 'html'
+    db.any('SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\'')
+    .then (data) ->
+      res.send formatter data
+    .catch (err) ->
+      res.send err.message || err
