@@ -60,6 +60,9 @@ formatter = (arr) ->
 
 # module
 module.exports = (robot) ->
+# initial massage
+  robot.send { room: '#general' }, 'hi, i have just woke up!'
+
 # cron
   new cron '0 */4 * * *', () ->
     robot.send { room: '#general' }, "http://#{OPENSHIFT_APP_DNS}/ping"
