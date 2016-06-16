@@ -10,7 +10,7 @@
 #   :pg \dt <table> - SHOW COLUMNS
 #   :mw <word> - Monier-Williams Sanskrit English Dictionary
 
-botName = 'ibsbot'
+botName = process.env.OPENSHIFT_APP_NAME
 
 # cron
 cron = require('cron') .CronJob
@@ -23,6 +23,7 @@ pgp = require('pg-promise')({
 conString = "#{process.env.OPENSHIFT_POSTGRESQL_DB_URL}/ibsbot0"
 db = pgp(conString)
 
+# utitilies
 if 'undefined' == typeof String.prototype.repeat
   String.prototype.repeat = (len) ->
     new Array(len + 1).join this
@@ -57,14 +58,19 @@ formatter = (arr) ->
     res = "```\n#{res}\n```"
   res
 
+# module
 module.exports = (robot) ->
 # cron
   new cron '0 */4 * * *', () ->
-    robot.send { room: '#general' }, 'ping'
+    robot.send { room: '#general' }, "http://#{OPENSHIFT_APP_DNS}/ping"
   , null, true, 'Asia/Tokyo'
 
+# env
+  # robot.hear ///^(@?#{botName}? )?:env$///i, (msg) ->
+  #   msg.send "env:\n#{JSON.stringify process.env}"
+
 # postgresql
-  robot.hear /^(@?ibsbot:? )?:pginit$/i, (msg) ->
+  robot.hear ///^(@?#{botName}? )?:pginit$///i, (msg) ->
     db.tx (t) ->
       t.batch [
         t.any 'DROP TABLE IF EXISTS test'
@@ -75,21 +81,21 @@ module.exports = (robot) ->
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^(@?ibsbot:? )?:pg \\dt$/i, (msg) ->
+  robot.hear ///^(@?#{botName}? )?:pg \\dt$///i, (msg) ->
     db.any('SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\'')
     .then (data) ->
       msg.send formatter data
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^(@?ibsbot:? )?:pg \\d (.+)$/i, (msg) ->
+  robot.hear ///^(@?#{botName}? )?:pg \\d (.+)$///i, (msg) ->
     db.any('SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name = $1', msg.match[2])
     .then (data) ->
       msg.send formatter data
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^(@?ibsbot:? )?:pgany (.*)$/i, (msg) ->
+  robot.hear ///^(@?#{botName}? )?:pgany (.*)$///i, (msg) ->
     query = msg.match[2]
     db.any(query)
     .then (data) ->
@@ -98,7 +104,7 @@ module.exports = (robot) ->
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^(@?ibsbot:? )?:pgnone (.*)$/i, (msg) ->
+  robot.hear ///^(@?#{botName}? )?:pgnone (.*)$///i, (msg) ->
     query = msg.match[2]
     db.any(query)
     .then () ->
@@ -106,7 +112,7 @@ module.exports = (robot) ->
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear /^(@?ibsbot:? )?:pgone (.*)$/i, (msg) ->
+  robot.hear ///^(@?#{botName}? )?:pgone (.*)$///i, (msg) ->
     query = msg.match[2]
     db.one(query)
     .then (data) ->
@@ -115,7 +121,7 @@ module.exports = (robot) ->
       msg.send err.message || err
 
 # dictionaries
-  robot.hear /^(@?ibsbot:? )?:mw\s+(.*)/i, (msg) ->
+  robot.hear ///^(@?#{botName}? )?:mw\s+(.*)///i, (msg) ->
     query = ".*\\|#{msg.match[2]}\\|.*"
     db.one('SELECT count(id) FROM table_dict_sa_en_mw WHERE key ~ $1', query)
     .then (data) ->
@@ -133,10 +139,26 @@ module.exports = (robot) ->
     # msg.send "http://www.sanskrit-lexicon.uni-koeln.de/cgi-bin/monier/monierv1a.pl?key=#{msg.match[1]}&filter=SktDevaUnicode&noLit=off&transLit=HK&scandir=../..MWScan/MWScanpng&filterdir=../../docs/filter"
 
 # router
-  robot.router.get '/data/tables', (req, res) ->
+  robot.router.get '/ping', (req, res) ->
     res.type 'html'
+    res.send '''
+      <!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <meta name="description" content="hi! i'm #{ibsbot}!" />
+          <title></title>
+        </head>
+        <body>
+          pong
+        </body>
+      </html>
+    '''
+
+  robot.router.get '/data/tables', (req, res) ->
+    res.type 'json'
     db.any('SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\'')
     .then (data) ->
-      res.send formatter data
+      res.send JSON.stringify data
     .catch (err) ->
       res.send err.message || err
