@@ -10,7 +10,7 @@
 #   :pg \dt <table> - SHOW COLUMNS
 #   :mw <word> - Monier-Williams Sanskrit English Dictionary
 
-botName = process.env.OPENSHIFT_APP_NAME
+botName = 'ibsbot' #process.env.OPENSHIFT_APP_NAME
 
 # cron
 cron = require('cron') .CronJob
@@ -64,41 +64,41 @@ module.exports = (robot) ->
   robot.send { room: '#general' }, 'hi, i have just woke up!'
 
 # cron
-  new cron '0 */4 * * *', () ->
-    robot.send { room: '#general' }, "http://#{OPENSHIFT_APP_DNS}/ping"
+  new cron '0 0 */4 * * *', () ->
+    robot.send { room: '#general' }, "http://#{process.env.OPENSHIFT_APP_DNS}/ping"
   , null, true, 'Asia/Tokyo'
 
 # env
-  # robot.hear ///^(@?#{botName}? )?:env$///i, (msg) ->
+  # robot.hear ///^(@?#{botName} ?)?:env$///i, (msg) ->
   #   msg.send "env:\n#{JSON.stringify process.env}"
 
 # postgresql
-  robot.hear ///^(@?#{botName}? )?:pginit$///i, (msg) ->
+  robot.hear ///^(@?#{botName}:?\x20)?:pginit$///i, (msg) ->
     db.tx (t) ->
       t.batch [
-        t.any 'DROP TABLE IF EXISTS test'
-        t.any 'CREATE TABLE test (id SERIAL, name TEXT)'
+        t.any 'DROP TABLE IF EXISTS config'
+        t.any 'CREATE TABLE config (key TEXT NOT NULL PRIMARY KEY, value TEXT)'
       ]
     .then (data) ->
       msg.send 'done'
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear ///^(@?#{botName}? )?:pg \\dt$///i, (msg) ->
+  robot.hear ///^(@?#{botName}:?\x20)?:pg\x20\\dt$///i, (msg) ->
     db.any('SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\'')
     .then (data) ->
       msg.send formatter data
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear ///^(@?#{botName}? )?:pg \\d (.+)$///i, (msg) ->
+  robot.hear ///^(@?#{botName}:?\x20)?:pg\x20\\d\x20(.+)$///i, (msg) ->
     db.any('SELECT column_name, data_type, is_nullable, column_default FROM information_schema.columns WHERE table_name = $1', msg.match[2])
     .then (data) ->
       msg.send formatter data
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear ///^(@?#{botName}? )?:pgany (.*)$///i, (msg) ->
+  robot.hear ///^(@?#{botName}:?\x20)?:pgany\x20(.+)$///i, (msg) ->
     query = msg.match[2]
     db.any(query)
     .then (data) ->
@@ -107,7 +107,7 @@ module.exports = (robot) ->
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear ///^(@?#{botName}? )?:pgnone (.*)$///i, (msg) ->
+  robot.hear ///^(@?#{botName}:?\x20)?:pgnone\x20(.+)$///i, (msg) ->
     query = msg.match[2]
     db.any(query)
     .then () ->
@@ -115,7 +115,7 @@ module.exports = (robot) ->
     .catch (err) ->
       msg.send err.message || err
 
-  robot.hear ///^(@?#{botName}? )?:pgone (.*)$///i, (msg) ->
+  robot.hear ///^(@?#{botName}:? )?:pgone\x20(.+)$///i, (msg) ->
     query = msg.match[2]
     db.one(query)
     .then (data) ->
@@ -124,7 +124,7 @@ module.exports = (robot) ->
       msg.send err.message || err
 
 # dictionaries
-  robot.hear ///^(@?#{botName}? )?:mw\s+(.*)///i, (msg) ->
+  robot.hear ///^(@?#{botName}:?\x20)?:mw\x20(.+)$///i, (msg) ->
     query = ".*\\|#{msg.match[2]}\\|.*"
     db.one('SELECT count(id) FROM table_dict_sa_en_mw WHERE key ~ $1', query)
     .then (data) ->
@@ -144,19 +144,19 @@ module.exports = (robot) ->
 # router
   robot.router.get '/ping', (req, res) ->
     res.type 'html'
-    res.send '''
+    res.send """
       <!doctype html>
       <html>
         <head>
           <meta charset="utf-8" />
-          <meta name="description" content="hi! i'm #{ibsbot}!" />
+          <meta name="description" content="hi! i'm @#{botName}!" />
           <title></title>
         </head>
         <body>
           pong
         </body>
       </html>
-    '''
+    """
 
   robot.router.get '/data/tables', (req, res) ->
     res.type 'json'
