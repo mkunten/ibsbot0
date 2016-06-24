@@ -8,9 +8,10 @@
 #   :pgone <query> - do query with a result (e.g. insert?)
 #   :pg \dt - SHOW TABLES
 #   :pg \dt <table> - SHOW COLUMNS
-#   :mw <word> - Monier-Williams Sanskrit English Dictionary
+#   [:,.]mw <word> - Monier-Williams Sanskrit English Dictionary
 
 botName = 'ibsbot' #process.env.OPENSHIFT_APP_NAME
+dicTrigger = '[:,.]'
 
 # cron
 cron = require('cron') .CronJob
@@ -124,7 +125,7 @@ module.exports = (robot) ->
       msg.send err.message || err
 
 # dictionaries
-  robot.hear ///^(@?#{botName}:?\x20)?:mw\x20(.+)$///i, (msg) ->
+  robot.hear ///^(@?#{botName}:?\x20)?#{dicTrigger}mw\x20(.+)$///i, (msg) ->
     query = ".*\\|#{msg.match[2]}\\|.*"
     db.one('SELECT count(id) FROM table_dict_sa_en_mw WHERE key ~ $1', query)
     .then (data) ->
