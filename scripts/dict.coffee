@@ -66,7 +66,7 @@ module.exports = (robot) ->
 
 # cron
   new cron '0 0 */6 * * *', () ->
-    robot.send { room: '#general' }, "http://#{process.env.OPENSHIFT_APP_DNS}/ping"
+    robot.send { room: 'mk' }, "http://#{process.env.OPENSHIFT_APP_DNS}/ping"
   , null, true, 'Asia/Tokyo'
 
 # env
