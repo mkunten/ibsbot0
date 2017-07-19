@@ -16,7 +16,7 @@
     "hubot-scripts": "^2.17.2",
     "hubot-slack": "^3.4.2",
     "pg": "^5.0.0",
-    "pg-promise": "git://github.com/vitaly-t/pg-promise"
+    "pg-promise": "git://github.com/vitaly-t/pg-promise#v.4.4.2"
   },
   "scripts": {
     "start": "PORT=$OPENSHIFT_NODEJS_PORT BIND_ADDRESS=$OPENSHIFT_NODEJS_IP HUBOT_SLACK_TOKEN=xoxb-49039017607-XzaO9mgbKxuh5sHd4bkapIFK bin/hubot -a slack"
